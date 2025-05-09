@@ -1,0 +1,64 @@
+name: Build and Publish electron36-vesktop
+
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    timeout-minutes: 4320
+    runs-on: archlinux
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build package
+        run: |
+          sudo pacman -Syu --noconfirm
+          makepkg --noconfirm --syncdeps --needed --sign
+
+      - name: Find built package
+        id: pkg
+        run: |
+          PKG=$(ls *.pkg.tar.zst | head -n1)
+          echo "pkgfile=$PKG" >> $GITHUB_OUTPUT
+          echo "sigfile=$PKG.sig" >> $GITHUB_OUTPUT
+
+      - name: Clone archrepo repository
+        uses: actions/checkout@v4
+        with:
+          repository: Lungooo/archrepo
+          path: archrepo
+          ssh-key: ${{ secrets.REPO_DEPLOY_KEY }}
+          lfs: true
+
+      - name: Add package to repo and sign db
+        run: |
+          cd archrepo/x86_64
+          cp ../../${{ steps.pkg.outputs.pkgfile }} .
+          cp ../../${{ steps.pkg.outputs.sigfile }} .
+          repo-add --verify --sign --remove lungoo.db.tar.gz *.pkg.tar.zst
+
+      - name: Push repo changes
+        run: |
+          cd archrepo
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          version=$(basename "${{ steps.pkg.outputs.pkgfile }}" | rev | cut -d'-' -f2,3 | rev)
+          git commit -m "Updated electron36-vesktop to Version $version"
+          git push
+
+      - name: Check if Electron version changed
+        id: electron_version
+        run: |
+          echo "version=$(grep '^pkgver=' PKGBUILD | cut -d= -f2)" >> $GITHUB_OUTPUT
+
+      - name: Trigger vesktop-patched-git build
+        if: github.event.before != '' # Always trigger on push, or add logic to only trigger on version change
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          repository: Lungooo/vesktop-patched-git
+          event-type: electron-updated
+          client-payload: '{"electron_version": "${{ steps.electron_version.outputs.version }}"}'
