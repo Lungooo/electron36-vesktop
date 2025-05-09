@@ -1,0 +1,27 @@
+From 874a6d54db048da4ac8413f79fc3cc22fe414d0b Mon Sep 17 00:00:00 2001
+From: Sophie Langer <sophie@lungoo.dev>
+Date: Fri, 10 Jan 2025 21:58:43 +0100
+Subject: [PATCH] change kBrowserDisplayName and PRODUCT_STRING to vesktop
+
+---
+ media/audio/pulse/pulse_util.cc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/media/audio/pulse/pulse_util.cc b/media/audio/pulse/pulse_util.cc
+index a3523a9bbb1d7..2a431d005c993 100644
+--- a/media/audio/pulse/pulse_util.cc
++++ b/media/audio/pulse/pulse_util.cc
+@@ -44,8 +44,8 @@ namespace {
+ constexpr char kBrowserDisplayName[] = "google-chrome";
+ #define PRODUCT_STRING "Google Chrome"
+ #else
+-constexpr char kBrowserDisplayName[] = "chromium-browser";
+-#define PRODUCT_STRING "Chromium"
++constexpr char kBrowserDisplayName[] = "vesktop";
++#define PRODUCT_STRING "Vesktop"
+ #endif
+ 
+ #if defined(DLOPEN_PULSEAUDIO)
+-- 
+2.47.1
+
